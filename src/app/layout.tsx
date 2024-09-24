@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import "~/styles/globals.css";
 
 import { GeistSans } from "geist/font/sans";
 import { type Metadata } from "next";
-
-import { TRPCReactProvider } from "~/trpc/react";
+import Sidebar from "./_components/Sidebar";
+import ClientProviders from "./_components/clientProviders";
 
 export const metadata: Metadata = {
   title: "Create T3 App",
@@ -17,7 +18,15 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${GeistSans.variable}`}>
       <body>
-        <TRPCReactProvider>{children}</TRPCReactProvider>
+        <ClientProviders>
+          <div className="flex min-h-screen">
+            {/* Sidebar */}
+            <Sidebar />
+
+            {/* Main content */}
+            <main className="flex-1 p-0">{children}</main>
+          </div>
+        </ClientProviders>
       </body>
     </html>
   );
