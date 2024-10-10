@@ -27,7 +27,7 @@ export default function ClientLayout({
           <Navbar toggleSidebar={toggleSidebar} />
 
           {/* Main content should fill the available space */}
-          <main className="flex-1 overflow-clip p-10">{children}</main>
+          <main className="flex-1 overflow-clip p-10 bg-white">{children}</main>
         </div>
       </div>
     </ClientProviders>
