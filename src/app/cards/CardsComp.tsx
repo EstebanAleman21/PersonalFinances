@@ -9,14 +9,16 @@ export default function MinimalistCardsPage() {
       number: "1234 5678 9101 1121",
       name: "Esteban Aleman",
       expiry: "12/25",
-      type: "Visa",
+      Provider: "Visa",
+      type: "Credit",
       nickname: "BBVA" // Card type or logo
     },
     {
       number: "2345 6789 1011 1213",
       name: "Esteban Aleman",
       expiry: "11/24",
-      type: "MasterCard",
+      Provider: "MasterCard",
+      type: "Credit",
       nickname: "Nu"
     },
     // Add more cards here...
@@ -31,19 +33,20 @@ export default function MinimalistCardsPage() {
         {cardsData.map((card, index) => (
           <div
             key={index}
-            className="relative p-4 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-all duration-300 cursor-pointer"
+            className=" bg-white relative p-4 border border-gray-300 rounded-lg hover:bg-white transition-all duration-300 cursor-pointer hover:shadow-xl"
           >
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">{card.name}</h2>
-              <span className="text-sm font-light">{card.type}</span>
+              <h2 className="text-2xl font-semibold">{card.nickname}</h2>
+              <h3>{card.Provider}</h3>
             </div>
 
-            <div className="mt-2">
+            <div className="my-2">
               <p className="text-md">
                 {card.number}
               </p>
-              <p className="text-sm text-gray-500">Expiry: {card.expiry}</p>
-              <p className="font-semibold">{card.nickname}</p>
+              <p className="text-sm text-gray-500 my-4">Expiry: {card.expiry}</p>
+              <p className="font-semibold text-lg my-3">{card.name}</p>
+              <span className="text-sm font-light">{card.type}</span>
             </div>
           </div>
         ))}

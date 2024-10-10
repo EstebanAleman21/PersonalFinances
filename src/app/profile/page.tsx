@@ -8,17 +8,28 @@ import {
 } from "~/components/ui/card";
 import Image from "next/image";
 import { Button } from "~/components/ui/button";
-import { useState } from "react";
+import { use, useState } from "react";
+import { signOut, useSession } from "next-auth/react";
 
 export default function ProfilePage() {
   const [editMode, setEditMode] = useState(false);
+
+  const { data: session, status } = useSession();
+
+  if (status === "loading") {
+    return <div>Loading...</div>;
+  }
+
+  if (!session) {
+    return <div>You need to be authenticated to view this page.</div>;
+  }
 
   const handleEdit = () => {
     setEditMode(!editMode);
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-100 py-2">
+    <div className="flex flex-col items-center justify-center mx-auto my-24 p-10 rounded-2xl">
       <Card className="w-full max-w-md rounded-lg bg-white shadow-md">
         <CardHeader>
           <div className="mt-4 flex items-center justify-center">
@@ -32,7 +43,7 @@ export default function ProfilePage() {
           </div>
         </CardHeader>
         <CardContent className="p-4 text-center">
-          <h2 className="text-lg font-semibold">Esteban Aleman</h2>
+          <h2 className="text-lg font-semibold">{session.user.name}</h2>
           <p className="text-gray-600">
             Software Engineer | React, Next.js, TypeScript
           </p>
@@ -40,7 +51,7 @@ export default function ProfilePage() {
             <h3 className="text-sm font-medium text-gray-700">
               Contact Information
             </h3>
-            <p className="text-gray-500">Email: esteban@example.com</p>
+            <p className="text-gray-500">Email: {session.user.email}</p>
             <p className="text-gray-500">Phone: +52 123 456 7890</p>
             {editMode && (
               <div className="mt-4">
@@ -62,7 +73,7 @@ export default function ProfilePage() {
           <Button variant="default" className="mr-2" onClick={handleEdit}>
             {editMode ? "Save" : "Edit Profile"}
           </Button>
-          <Button variant="destructive">Logout</Button>
+          <Button variant="destructive" onClick={() => signOut()}>Logout</Button>
         </CardFooter>
       </Card>
     </div>
