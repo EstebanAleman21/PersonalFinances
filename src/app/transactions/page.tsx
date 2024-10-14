@@ -45,8 +45,8 @@ export default function Component() {
 
   // Mutation to add a new transaction
   const addTransactionMutation = api.transactions.create.useMutation({
-    onSuccess: () => {
-      refetch() // Refetch transactions after successful mutation
+    onSuccess: async () => {
+      await refetch() // Refetch transactions after successful mutation
     },
   })
 
@@ -79,7 +79,7 @@ export default function Component() {
   }
 
   // Extract unique categories from transactions
-  const categories: string[] = Array.from(new Set(transactions.map((transaction: { category: any }) => transaction.category)))
+  const categories: string[] = Array.from(new Set(transactions.map((transaction: { category: string }) => transaction.category)))
 
   // Apply filters to transactions
   const filteredTransactions = transactions.filter((transaction: { id: number; date: Date; description: string; amount: number; category: string; type: "INCOME" | "EXPENSE" | "TRANSFER"; createdAt: Date; updatedAt: Date; userId: string }) => {
