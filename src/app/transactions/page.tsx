@@ -13,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table"
+import { api } from "~/trpc/react"
 
 type Transaction = {
   id: number
@@ -20,24 +21,33 @@ type Transaction = {
   description: string
   amount: number
   category: string
-  type: "income" | "expense"
+  type: "INCOME" | "EXPENSE" | "TRANSFER"  // Fixing the case of the transaction types
 }
 
 export default function Component() {
-  const [transactions, setTransactions] = useState<Transaction[]>([
-    { id: 1, date: "2023-05-01", description: "Salary", amount: 3000, category: "Income", type: "income" },
-    { id: 2, date: "2023-05-02", description: "Groceries", amount: -100, category: "Food", type: "expense" },
-    { id: 3, date: "2023-05-03", description: "Electric Bill", amount: -80, category: "Utilities", type: "expense" },
-    { id: 4, date: "2023-05-04", description: "Freelance Work", amount: 500, category: "Income", type: "income" },
-    { id: 5, date: "2023-05-05", description: "Restaurant", amount: -50, category: "Food", type: "expense" },
-  ])
-
+  // State management for new transaction input
   const [newTransaction, setNewTransaction] = useState<Omit<Transaction, "id">>({
     date: "",
     description: "",
     amount: 0,
     category: "",
-    type: "expense",
+    type: "EXPENSE",  // Ensure consistent case
+  })
+
+  const [filters, setFilters] = useState({
+    category: "all",
+    date: "",
+    type: "all",
+  })
+
+  // Fetch transactions dynamically using tRPC
+  const { data: transactions = [], refetch } = api.transactions.getAll.useQuery()
+
+  // Mutation to add a new transaction
+  const addTransactionMutation = api.transactions.create.useMutation({
+    onSuccess: () => {
+      refetch() // Refetch transactions after successful mutation
+    },
   })
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -49,23 +59,38 @@ export default function Component() {
     setNewTransaction(prev => ({ ...prev, [name]: value }))
   }
 
+  const handleFilterChange = (name: string, value: string) => {
+    setFilters(prev => ({ ...prev, [name]: value }))
+  }
+
   const handleAddTransaction = () => {
     const transactionToAdd = {
       ...newTransaction,
-      id: transactions.length + 1,
-      amount: newTransaction.type === "expense" ? -Math.abs(newTransaction.amount) : Math.abs(newTransaction.amount),
+      amount: newTransaction.type === "EXPENSE" ? -Math.abs(newTransaction.amount) : Math.abs(newTransaction.amount),
     }
-    setTransactions(prev => [...prev, transactionToAdd])
+    addTransactionMutation.mutate(transactionToAdd)
     setNewTransaction({
       date: "",
       description: "",
       amount: 0,
       category: "",
-      type: "expense",
+      type: "EXPENSE", // Resetting the default case
     })
   }
 
-  const sortedTransactions = [...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  // Extract unique categories from transactions
+  const categories: string[] = Array.from(new Set(transactions.map((transaction: { category: any }) => transaction.category)))
+
+  // Apply filters to transactions
+  const filteredTransactions = transactions.filter((transaction: { id: number; date: Date; description: string; amount: number; category: string; type: "INCOME" | "EXPENSE" | "TRANSFER"; createdAt: Date; updatedAt: Date; userId: string }) => {
+    return (
+      (filters.category !== "all" ? transaction.category === filters.category : true) &&
+      (filters.date ? new Date(transaction.date).toISOString().split('T')[0] === filters.date : true) &&
+      (filters.type !== "all" ? transaction.type === filters.type : true)
+    )
+  })
+
+  const sortedTransactions = [...filteredTransactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
   return (
     <div className="container mx-auto my-24 bg-white shadow-2xl p-10 rounded-2xl">
@@ -106,13 +131,50 @@ export default function Component() {
               <SelectValue placeholder="Type" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="income">Income</SelectItem>
-              <SelectItem value="expense">Expense</SelectItem>
+              <SelectItem value="INCOME">Income</SelectItem>  {/* Case sensitive */}
+              <SelectItem value="EXPENSE">Expense</SelectItem>
+              <SelectItem value="TRANSFER">Transfer</SelectItem>
             </SelectContent>
           </Select>
           <Button onClick={handleAddTransaction}>
             <Plus className="mr-2 h-4 w-4" /> Add Transaction
           </Button>
+        </div>
+      </div>
+      <div className="mb-4 p-4 border rounded-lg bg-background">
+        <h2 className="text-lg font-semibold mb-2">Filter Transactions</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Input
+            type="date"
+            name="date"
+            value={filters.date}
+            onChange={(e) => handleFilterChange("date", e.target.value)}
+            placeholder="Filter by Date"
+          />
+          <Select name="category" onValueChange={(value) => handleFilterChange("category", value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Filter by Category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem> {/* Option for all categories */}
+              {categories.map((category: string) => (
+                <SelectItem key={category} value={category}>
+                  {category}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select name="type" onValueChange={(value) => handleFilterChange("type", value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Filter by Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="INCOME">Income</SelectItem>
+              <SelectItem value="EXPENSE">Expense</SelectItem>
+              <SelectItem value="TRANSFER">Transfer</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
       <div className="border rounded-lg overflow-hidden">
@@ -129,7 +191,7 @@ export default function Component() {
           <TableBody>
             {sortedTransactions.map((transaction) => (
               <TableRow key={transaction.id}>
-                <TableCell>{transaction.date}</TableCell>
+                <TableCell>{new Date(transaction.date).toLocaleDateString()}</TableCell>
                 <TableCell>{transaction.description}</TableCell>
                 <TableCell className={transaction.amount >= 0 ? "text-green-600" : "text-red-600"}>
                   ${Math.abs(transaction.amount).toFixed(2)}

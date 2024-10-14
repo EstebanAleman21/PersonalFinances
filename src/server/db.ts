@@ -1,6 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-
-import { env } from "~/env";
+import { env } from "~/env"; // Make sure this path is correct
 
 const createPrismaClient = () =>
   new PrismaClient({
